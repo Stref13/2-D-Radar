@@ -40,6 +40,7 @@ else()
     else()
         add_executable(Radar_2D
             ${PROJECT_SOURCES}
+            Radar/RadarWidget.cpp Radar/RadarWidget.h
         )
     endif()
 endif()

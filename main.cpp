@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 
 #include <QApplication>
-#include "RadarWidget.h"
+#include "Radar/RadarWidget.h"
 
 int main(int argc, char *argv[])
 {

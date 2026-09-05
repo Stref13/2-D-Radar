@@ -1,6 +1,8 @@
 #include "RadarWidget.h"
 #include <QPainter>
 #include <QDateTime>
+#include <cmath>
+#include <QDebug>
 
 RadarWidget::RadarWidget(QWidget *parent)
     : QWidget(parent)
@@ -18,6 +20,16 @@ void RadarWidget::updateFrame()
     if (currentAngle >= 360.0)
     {
         currentAngle -= 360.0;
+    }
+
+    targetDetected = isTargetDetected();
+    if (targetDetected)
+    {
+        qDebug() << "TARGET DETECTED";
+        qDebug() << "Azimuth:"
+                 << calcTargetAzimuth();
+        qDebug() << "Range:"
+                 << calcTargetRange();
     }
     update(); // Перерисовка
 }
@@ -49,8 +61,12 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     double screen_targ_y = -target_y;
 
     painter.setPen(Qt::NoPen);
-    painter.setBrush(Qt::red);
-    painter.drawEllipse(QPointF(screen_targ_x,screen_targ_y),6,6);
+    if(targetDetected)
+        painter.setBrush(Qt::yellow);
+    else
+        painter.setBrush(Qt::red);
+    double targSize = targetDetected ? 10 : 6;
+    painter.drawEllipse(QPointF(screen_targ_x,screen_targ_y),targSize,targSize);
 
     painter.save();
     painter.rotate(currentAngle);
@@ -67,4 +83,45 @@ void RadarWidget::paintEvent(QPaintEvent *event)
                     10 * 16);
 
     painter.restore();
+}
+
+double RadarWidget::calcTargetAzimuth() const
+{
+    double azimuthRad = atan2(-target_y,target_x);
+
+    double azimuthDegrees =
+        azimuthRad * 180.0 / M_PI;
+
+    if (azimuthDegrees < 0)
+    {
+        azimuthDegrees += 360.0;
+    }
+
+    return azimuthDegrees;
+}
+
+
+double RadarWidget::calcTargetRange() const
+{
+    return sqrt(target_x*target_x + target_y * target_y);
+}
+
+bool RadarWidget::isTargetDetected() const
+{
+    double targAz = calcTargetAzimuth();
+
+    double beamStart = currentAngle;
+    double beamEnd = currentAngle + 5.0;
+
+    if (beamEnd < 360.0)
+    {
+        return targAz >= beamStart &&
+               targAz <= beamEnd;
+    }
+
+    beamEnd -= 360.0;
+
+    return targAz >= beamStart ||
+           targAz <= beamEnd;
+
 }

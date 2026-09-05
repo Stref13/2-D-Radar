@@ -15,9 +15,14 @@ private slots:
     void updateFrame();
 private:
     QTimer timer;
+    bool targetDetected = false;
     double currentAngle  = 0.0;  // Текущий угол поворота луча
     double rotationSpeed = 60.0; // Скорость вращения лучв [град/с]
     double target_x = 100;
     double target_y = 150;
     double target_z = 50;
+
+    double calcTargetAzimuth() const;
+    double calcTargetRange() const;
+    bool   isTargetDetected() const;
 };
