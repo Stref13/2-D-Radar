@@ -1,0 +1,70 @@
+#include "RadarWidget.h"
+#include <QPainter>
+#include <QDateTime>
+
+RadarWidget::RadarWidget(QWidget *parent)
+    : QWidget(parent)
+{
+    setMinimumSize(600,600);
+    connect(&timer,&QTimer::timeout,this,&RadarWidget::updateFrame);
+    timer.start(16); // ~60 FPS
+}
+
+void RadarWidget::updateFrame()
+{
+    double deltaTime = 0.016; // 16 ms
+    currentAngle += rotationSpeed * deltaTime;
+
+    if (currentAngle >= 360.0)
+    {
+        currentAngle -= 360.0;
+    }
+    update(); // Перерисовка
+}
+
+void RadarWidget::paintEvent(QPaintEvent *event)
+{
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    painter.fillRect(rect(), Qt::black);
+
+    int side = qMin(width(), height());
+    painter.translate(width()/2, height()/2);
+
+    double radius = side/2 - 20;
+
+    painter.setPen(QPen(Qt::green,2));
+    painter.drawEllipse(QPointF(0,0),radius,radius);
+
+    for(int i = 1; i<=4;++i)
+    {
+        painter.drawEllipse(QPointF(0,0),radius * i/4,radius * i/4);
+    }
+
+    painter.drawLine(-radius,0,radius,0);
+    painter.drawLine(0,-radius,0,radius);
+
+    double screen_targ_x = target_x;
+    double screen_targ_y = -target_y;
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(Qt::red);
+    painter.drawEllipse(QPointF(screen_targ_x,screen_targ_y),6,6);
+
+    painter.save();
+    painter.rotate(currentAngle);
+
+    QRadialGradient gradient(0,0,radius);
+    gradient.setColorAt(0, QColor(0,255,0,180));
+    gradient.setColorAt(1, QColor(0,255,0,0));
+
+    painter.setBrush(gradient);
+    painter.setPen(Qt::NoPen);
+
+    painter.drawPie(QRectF(-radius, -radius, radius*2, radius*2),
+                    0 * 16,
+                    10 * 16);
+
+    painter.restore();
+}
