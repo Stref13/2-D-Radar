@@ -21,12 +21,12 @@ public:
     double GetVy() const {return vy;}
     double GetVz() const {return vz;}
 private:
-    double x;
-    double y;
-    double z;
+    double x; // Координата x [м]
+    double y; // Координата y [м]
+    double z; // Координата z [м]
 
-    double vx;
-    double vy;
-    double vz;
+    double vx; // Составляющая скорости vx [м/с]
+    double vy; // Составляющая скорости vy [м/с]
+    double vz; // Составляющая скорости vz [м/с]
 };
 

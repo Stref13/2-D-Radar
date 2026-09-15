@@ -18,6 +18,8 @@ private slots:
 private:
     QTimer timer;
     Target target;
+    double scale;                //Перевод из пикселей в метры
+    double maxRange = 1000.0;    // Дальность обнаружения [м]
     double currentAngle  = 0.0;  // Текущий угол поворота луча
     double rotationSpeed = 60.0; // Скорость вращения лучв [град/с]
 

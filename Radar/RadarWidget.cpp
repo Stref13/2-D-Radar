@@ -6,7 +6,7 @@
 #include <QIcon>
 RadarWidget::RadarWidget(QWidget *parent)
     : QWidget(parent),
-      target(100.0,150.0,50.0)
+      target(400.0,600.0,120.0)
 {
     setWindowTitle("Radar");
     setWindowIcon(QIcon(":/icons/radar_icon.jpg"));
@@ -29,21 +29,21 @@ void RadarWidget::updateFrame()
     }
 
     RadarMeasurement measurement = calcMeasurements();
-    if(measurement.range > 250)
-    {
-        target.SetXYZ(100.0,150.0,50.0);
-    }
+    // if(measurement.range > 1000)
+    // {
+    //     target.SetXYZ(400.0,600.0,120.0);
+    // }
 
     targetDetected = isTargetDetected(measurement);
     if (targetDetected)
     {
         qDebug() << "TARGET DETECTED";
         qDebug() << "Range:"
-                 << measurement.range;
+                 << measurement.range<<"м";
         qDebug() << "Azimuth:"
-                 << measurement.azimuth;
+                 << measurement.azimuth<<"град";
         qDebug() << "Elevation:"
-                 << measurement.elevation;
+                 << measurement.elevation<<"град";
     }
     update(); // Перерисовка
 }
@@ -59,30 +59,37 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     painter.translate(width()/2, height()/2);
 
     double radius = side/2 - 20;
+    scale  = radius/maxRange;
 
     painter.setPen(QPen(Qt::green,2));
     painter.drawEllipse(QPointF(0,0),radius,radius);
 
     for(int i = 1; i<=4;++i)
     {
-        painter.drawEllipse(QPointF(0,0),radius * i/4,radius * i/4);
+        double ringRadius = radius * i / 4;
+        painter.drawEllipse(QPointF(0,0),ringRadius,ringRadius);
+        painter.setPen(Qt::green);
+        QString ringText = QString::number(maxRange * i /4) + "м";
+        painter.drawText(0,-ringRadius-5,ringText);
     }
 
     painter.drawLine(-radius,0,radius,0);
     painter.drawLine(0,-radius,0,radius);
 
-    double screen_targ_x = target.GetX();
-    double screen_targ_y = -target.GetY();
-
-    painter.setPen(Qt::NoPen);
-    if(targetDetected)
-        painter.setBrush(Qt::yellow);
-    else
-        painter.setBrush(Qt::red);
-    double targSize = targetDetected ? 10 : 6;
-    painter.drawEllipse(QPointF(screen_targ_x,screen_targ_y),targSize,targSize);
-
     RadarMeasurement measurement = calcMeasurements();
+    if (measurement.range < maxRange){
+        double screen_targ_x = target.GetX()  * scale;
+        double screen_targ_y = -target.GetY() * scale;
+
+        painter.setPen(Qt::NoPen);
+        if(targetDetected)
+            painter.setBrush(Qt::yellow);
+        else
+            painter.setBrush(Qt::red);
+        double targSize = targetDetected ? 10 : 6;
+        painter.drawEllipse(QPointF(screen_targ_x,screen_targ_y),targSize,targSize);
+    }
+
     painter.setPen(Qt::green);
     QString targ_info = QString("R: %1\n" " Az: %2\n" " El: %3")
             .arg(measurement.range,0,'f',1)
@@ -109,6 +116,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
 
 bool RadarWidget::isTargetDetected(const RadarMeasurement& measurement) const
 {
+    if(measurement.range > maxRange)  return false;
     double beamStart = currentAngle;
     double beamEnd = currentAngle + 5.0;
 

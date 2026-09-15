@@ -5,7 +5,7 @@ Target::Target(double x, double y, double z)
     : x(x),
       y(y),
       z(z),
-      vx(20.0),
+      vx(40.0),
       vy(-10.0),
       vz(0.0) {}
 
