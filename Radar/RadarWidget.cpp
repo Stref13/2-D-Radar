@@ -19,11 +19,6 @@ void RadarWidget::updateFrame()
 {
     double deltaTime = 0.016; // 16 ms
 
-    if(calcTargetRange() > 250)
-    {
-        target.SetXYZ(100.0,150.0,50.0);
-    }
-
     target.update(deltaTime);
 
     currentAngle += rotationSpeed * deltaTime;
@@ -33,14 +28,22 @@ void RadarWidget::updateFrame()
         currentAngle -= 360.0;
     }
 
-    targetDetected = isTargetDetected();
+    RadarMeasurement measurement = calcMeasurements();
+    if(measurement.range > 250)
+    {
+        target.SetXYZ(100.0,150.0,50.0);
+    }
+
+    targetDetected = isTargetDetected(measurement);
     if (targetDetected)
     {
         qDebug() << "TARGET DETECTED";
-        qDebug() << "Azimuth:"
-                 << calcTargetAzimuth();
         qDebug() << "Range:"
-                 << calcTargetRange();
+                 << measurement.range;
+        qDebug() << "Azimuth:"
+                 << measurement.azimuth;
+        qDebug() << "Elevation:"
+                 << measurement.elevation;
     }
     update(); // Перерисовка
 }
@@ -79,9 +82,13 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     double targSize = targetDetected ? 10 : 6;
     painter.drawEllipse(QPointF(screen_targ_x,screen_targ_y),targSize,targSize);
 
+    RadarMeasurement measurement = calcMeasurements();
     painter.setPen(Qt::green);
-    QString targ_info = QString("x: %1 y: %2").arg(target.GetX(),0,'f',1).arg(target.GetY(),0,'f',1);
-    painter.drawText(screen_targ_x - 30, screen_targ_y - 12, targ_info);
+    QString targ_info = QString("R: %1\n" " Az: %2\n" " El: %3")
+            .arg(measurement.range,0,'f',1)
+            .arg(measurement.azimuth,0,'f',1)
+            .arg(measurement.elevation,0,'f',1);
+    painter.drawText(-radius+15, -radius+30, targ_info);
 
     painter.save();
     painter.rotate(currentAngle);
@@ -100,45 +107,48 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     painter.restore();
 }
 
-double RadarWidget::calcTargetAzimuth() const
+bool RadarWidget::isTargetDetected(const RadarMeasurement& measurement) const
 {
-    double azimuthRad = atan2(-target.GetY(),target.GetX());
-
-    double azimuthDegrees =
-        azimuthRad * 180.0 / M_PI;
-
-    if (azimuthDegrees < 0)
-    {
-        azimuthDegrees += 360.0;
-    }
-
-    return azimuthDegrees;
-}
-
-
-double RadarWidget::calcTargetRange() const
-{
-    double x = target.GetX();
-    double y = target.GetY();
-    return sqrt(x*x + y * y);
-}
-
-bool RadarWidget::isTargetDetected() const
-{
-    double targAz = calcTargetAzimuth();
-
     double beamStart = currentAngle;
     double beamEnd = currentAngle + 5.0;
 
     if (beamEnd < 360.0)
     {
-        return targAz >= beamStart &&
-               targAz <= beamEnd;
+        return measurement.azimuth >= beamStart &&
+               measurement.azimuth <= beamEnd;
     }
 
     beamEnd -= 360.0;
 
-    return targAz >= beamStart ||
-           targAz <= beamEnd;
+    return measurement.azimuth >= beamStart ||
+           measurement.azimuth <= beamEnd;
 
+}
+
+RadarMeasurement RadarWidget::calcMeasurements() const
+{
+    double x = target.GetX();
+    double y = target.GetY();
+    double z = target.GetZ();
+
+    RadarMeasurement measurement;
+
+    measurement.range =
+            sqrt(x*x + y*y + z*z);
+
+    measurement.azimuth =
+            atan2(-y,x)*180/M_PI;
+
+    if (measurement.azimuth < 0)
+    {
+        measurement.azimuth += 360.0;
+    }
+
+    double horizontalRange =
+        sqrt(x * x + y * y);
+
+    measurement.elevation =
+        atan2(z,horizontalRange) * 180.0 / M_PI;
+
+    return measurement;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Target/Target.h"
+#include "RadarMeasurements.h"
 #include <QWidget>
 #include <QTimer>
 
@@ -21,8 +22,7 @@ private:
     double rotationSpeed = 60.0; // Скорость вращения лучв [град/с]
 
     bool targetDetected = false;
+    bool isTargetDetected(const RadarMeasurement& measurement) const;
 
-    double calcTargetAzimuth() const;
-    double calcTargetRange() const;
-    bool   isTargetDetected() const;
+    RadarMeasurement calcMeasurements() const;
 };

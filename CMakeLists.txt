@@ -43,6 +43,7 @@ else()
             Radar/RadarWidget.cpp Radar/RadarWidget.h
             icons.qrc
             Target/target.h Target/target.cpp
+            Radar/RadarMeasurements.h Radar/RadarMeasurements.cpp
         )
     endif()
 endif()
