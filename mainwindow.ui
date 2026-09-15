@@ -11,7 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Radar</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="icons.qrc">
+    <normaloff>:/new/prefix1/radar_icon.jpg</normaloff>:/new/prefix1/radar_icon.jpg</iconset>
   </property>
   <widget class="QWidget" name="centralwidget"/>
   <widget class="QMenuBar" name="menubar">
@@ -26,6 +30,8 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections/>
 </ui>
