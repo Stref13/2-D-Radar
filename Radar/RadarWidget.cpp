@@ -12,10 +12,13 @@ RadarWidget::RadarWidget(QWidget *parent)
     setMinimumSize(600,600);
     targets.emplace_back(400.0,600.0,120.0,
                          20.0, -10.0, 0.0);
+
     targets.emplace_back(-500.0,300.0,200.0,
                          15.0, 5.0, 0.0);
+
     targets.emplace_back(200.0,-700.0,80.0,
                          -10.0, 20.0, 0.0);
+
     connect(&timer,&QTimer::timeout,this,&RadarWidget::updateFrame);
     timer.start(16); // ~60 FPS
 }
@@ -96,6 +99,12 @@ void RadarWidget::paintEvent(QPaintEvent *event)
         double screen_targ_x = target.GetX()  * scale;
         double screen_targ_y = -target.GetY() * scale;
         bool detected = isTargetDetected(measurement);
+        if(static_cast<int>(i) == selectedTarget)
+        {
+            // painter.setBrush(Qt::white);
+            painter.setPen(QPen(Qt::white,2));
+            painter.drawEllipse(QPointF(screen_targ_x,screen_targ_y),7.0,7.0);
+        }
         if(detected)
             painter.setBrush(Qt::yellow);
         else
@@ -107,12 +116,52 @@ void RadarWidget::paintEvent(QPaintEvent *event)
         painter.setPen(Qt::green);
         QString targetLabel = QString("T%1").arg(i+1);
         painter.drawText(screen_targ_x+8, screen_targ_y+5, targetLabel);
-        QString targ_info = QString("Targ: %1\n" " R: %2\n" " Az: %3\n" " El: %4")
-                .arg(i+1)
-                .arg(measurement.range,0,'f',1)
-                .arg(measurement.azimuth,0,'f',1)
-                .arg(measurement.elevation,0,'f',1);
-        painter.drawText(-radius+15, -radius+30+i*15, targ_info);
+        // QString targ_info = QString("Targ: %1\n" " R: %2\n" " Az: %3\n" " El: %4")
+        //         .arg(i+1)
+        //         .arg(measurement.range,0,'f',1)
+        //         .arg(measurement.azimuth,0,'f',1)
+        //         .arg(measurement.elevation,0,'f',1);
+        // painter.drawText(-radius+15, -radius+30+i*15, targ_info);
+    }
+
+    if(selectedTarget >=0 &&
+        selectedTarget < static_cast<int>(targets.size()))
+    {
+        const Target& target = targets[selectedTarget];
+        RadarMeasurement measurement = calcMeasurements(target);
+        if(measurement.range < maxRange){
+            painter.save();
+            painter.resetTransform();
+
+            QRectF infoRect(20,20,90,140);
+
+            painter.setBrush(QColor(0,0,0,200));
+            painter.setPen(QPen(Qt::green, 2));
+
+            painter.drawRect(infoRect);
+            painter.setPen(Qt::green);
+
+            QString info = QString("Target %1 \n"
+                                   "\n"
+                                   "R: %2\n"
+                                   "Az: %3\n"
+                                   "El: %4\n"
+                                   "\n"
+                                   "Vx: %5 m/s\n"
+                                   "Vy: %6 m/s\n"
+                                   "Vz: %7 m/s"
+                                ).arg(selectedTarget + 1)
+                                .arg(measurement.range, 0, 'f', 1)
+                                .arg(measurement.azimuth, 0, 'f', 1)
+                                .arg(measurement.elevation, 0, 'f', 1)
+                                .arg(target.GetVx(), 0, 'f', 1)
+                                .arg(target.GetVy(), 0, 'f', 1)
+                                .arg(target.GetVz(), 0, 'f', 1);
+
+            painter.drawText(infoRect.adjusted(10,10,-10,-10),Qt::AlignLeft | Qt::AlignTop,info);
+            painter.restore();
+        }
+
     }
 
     painter.save();
@@ -130,6 +179,32 @@ void RadarWidget::paintEvent(QPaintEvent *event)
                     10 * 16);
 
     painter.restore();
+}
+
+void RadarWidget::mousePressEvent(QMouseEvent *event)
+{
+
+    double mouseX = event->pos().x() - width()/2.0;
+    double mouseY = event->pos().y() - height()/2.0;
+
+    double minDistance = 15.0;
+    for (size_t i = 0;i<targets.size();++i)
+    {
+        const Target& target = targets[i];
+        double targetX = target.GetX()  * scale;
+        double targetY = -target.GetY() * scale;
+
+        double dx = mouseX - targetX;
+        double dy = mouseY - targetY;
+
+        double distance = sqrt(dx*dx+dy*dy);
+        if (distance < minDistance)
+        {
+            minDistance = distance;
+            selectedTarget = static_cast<int>(i);
+        }
+    }
+    update();
 }
 
 bool RadarWidget::isTargetDetected(const RadarMeasurement& measurement) const

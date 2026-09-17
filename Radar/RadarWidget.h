@@ -6,6 +6,7 @@
 #include <vector>
 #include <QWidget>
 #include <QTimer>
+#include <QMouseEvent>
 
 class RadarWidget : public QWidget
 {
@@ -15,6 +16,7 @@ public:
     explicit RadarWidget(QWidget *parent = nullptr);
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
 private slots:
     void updateFrame();
 private:
@@ -24,8 +26,7 @@ private:
     double maxRange = 1000.0;    // Дальность обнаружения [м]
     double currentAngle  = 0.0;  // Текущий угол поворота луча
     double rotationSpeed = 60.0; // Скорость вращения лучв [град/с]
-
-    // std::vector<bool> detectedTargets = false;
+    int selectedTarget = -1;
     bool isTargetDetected(const RadarMeasurement& measurement) const;
 
     RadarMeasurement calcMeasurements(const Target& target) const;
