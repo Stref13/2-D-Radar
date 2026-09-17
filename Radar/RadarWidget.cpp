@@ -5,12 +5,17 @@
 #include <QDebug>
 #include <QIcon>
 RadarWidget::RadarWidget(QWidget *parent)
-    : QWidget(parent),
-      target(400.0,600.0,120.0)
+    : QWidget(parent)
 {
     setWindowTitle("Radar");
     setWindowIcon(QIcon(":/icons/radar_icon.jpg"));
     setMinimumSize(600,600);
+    targets.emplace_back(400.0,600.0,120.0,
+                         20.0, -10.0, 0.0);
+    targets.emplace_back(-500.0,300.0,200.0,
+                         15.0, 5.0, 0.0);
+    targets.emplace_back(200.0,-700.0,80.0,
+                         -10.0, 20.0, 0.0);
     connect(&timer,&QTimer::timeout,this,&RadarWidget::updateFrame);
     timer.start(16); // ~60 FPS
 }
@@ -19,7 +24,10 @@ void RadarWidget::updateFrame()
 {
     double deltaTime = 0.016; // 16 ms
 
-    target.update(deltaTime);
+    for(Target& target : targets)
+    {
+        target.update(deltaTime);
+    }
 
     currentAngle += rotationSpeed * deltaTime;
 
@@ -28,22 +36,26 @@ void RadarWidget::updateFrame()
         currentAngle -= 360.0;
     }
 
-    RadarMeasurement measurement = calcMeasurements();
+    // RadarMeasurement measurement = calcMeasurements(target);
     // if(measurement.range > 1000)
     // {
     //     target.SetXYZ(400.0,600.0,120.0);
     // }
-
-    targetDetected = isTargetDetected(measurement);
-    if (targetDetected)
+    for(size_t i =0;i<targets.size();++i)
     {
-        qDebug() << "TARGET DETECTED";
-        qDebug() << "Range:"
-                 << measurement.range<<"м";
-        qDebug() << "Azimuth:"
-                 << measurement.azimuth<<"град";
-        qDebug() << "Elevation:"
-                 << measurement.elevation<<"град";
+        const Target& target = targets[i];
+        RadarMeasurement measurement = calcMeasurements(target);
+        bool detected = isTargetDetected(measurement);/**/
+        if (detected)
+        {
+            qDebug() << "TARGET DETECTED"<<i+1;
+            qDebug() << "Range:"
+                     << measurement.range<<"м";
+            qDebug() << "Azimuth:"
+                     << measurement.azimuth<<"град";
+            qDebug() << "Elevation:"
+                     << measurement.elevation<<"град";
+        }
     }
     update(); // Перерисовка
 }
@@ -76,26 +88,32 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     painter.drawLine(-radius,0,radius,0);
     painter.drawLine(0,-radius,0,radius);
 
-    RadarMeasurement measurement = calcMeasurements();
-    if (measurement.range < maxRange){
+    for (size_t i = 0; i < targets.size();++i)
+    {
+        const Target& target = targets[i];
+        RadarMeasurement measurement = calcMeasurements(target);
+        if (measurement.range > maxRange) {continue;}
         double screen_targ_x = target.GetX()  * scale;
         double screen_targ_y = -target.GetY() * scale;
-
-        painter.setPen(Qt::NoPen);
-        if(targetDetected)
+        bool detected = isTargetDetected(measurement);
+        if(detected)
             painter.setBrush(Qt::yellow);
         else
             painter.setBrush(Qt::red);
-        double targSize = targetDetected ? 10 : 6;
+        painter.setPen(Qt::NoPen);
+        double targSize = detected ? 10 : 6;
         painter.drawEllipse(QPointF(screen_targ_x,screen_targ_y),targSize,targSize);
-    }
 
-    painter.setPen(Qt::green);
-    QString targ_info = QString("R: %1\n" " Az: %2\n" " El: %3")
-            .arg(measurement.range,0,'f',1)
-            .arg(measurement.azimuth,0,'f',1)
-            .arg(measurement.elevation,0,'f',1);
-    painter.drawText(-radius+15, -radius+30, targ_info);
+        painter.setPen(Qt::green);
+        QString targetLabel = QString("T%1").arg(i+1);
+        painter.drawText(screen_targ_x+8, screen_targ_y+5, targetLabel);
+        QString targ_info = QString("Targ: %1\n" " R: %2\n" " Az: %3\n" " El: %4")
+                .arg(i+1)
+                .arg(measurement.range,0,'f',1)
+                .arg(measurement.azimuth,0,'f',1)
+                .arg(measurement.elevation,0,'f',1);
+        painter.drawText(-radius+15, -radius+30+i*15, targ_info);
+    }
 
     painter.save();
     painter.rotate(currentAngle);
@@ -133,7 +151,7 @@ bool RadarWidget::isTargetDetected(const RadarMeasurement& measurement) const
 
 }
 
-RadarMeasurement RadarWidget::calcMeasurements() const
+RadarMeasurement RadarWidget::calcMeasurements(const Target& target) const
 {
     double x = target.GetX();
     double y = target.GetY();

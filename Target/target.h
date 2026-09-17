@@ -4,7 +4,7 @@
 class Target
 {
 public:
-    Target(double x, double y, double z);
+    Target(double x, double y, double z, double vx,double vy,double vz);
 
     void update(double deltaTime);
 

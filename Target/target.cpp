@@ -1,13 +1,13 @@
 #include "target.h"
 
 
-Target::Target(double x, double y, double z)
+Target::Target(double x, double y, double z,double vx,double vy,double vz)
     : x(x),
       y(y),
       z(z),
-      vx(40.0),
-      vy(-10.0),
-      vz(0.0) {}
+      vx(vx),
+      vy(vy),
+      vz(vz) {}
 
 void Target::update(double deltaTime)
 {

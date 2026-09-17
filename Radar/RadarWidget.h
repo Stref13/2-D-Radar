@@ -2,6 +2,8 @@
 
 #include "../Target/Target.h"
 #include "RadarMeasurements.h"
+
+#include <vector>
 #include <QWidget>
 #include <QTimer>
 
@@ -17,14 +19,14 @@ private slots:
     void updateFrame();
 private:
     QTimer timer;
-    Target target;
+    std::vector<Target> targets;
     double scale;                //Перевод из пикселей в метры
     double maxRange = 1000.0;    // Дальность обнаружения [м]
     double currentAngle  = 0.0;  // Текущий угол поворота луча
     double rotationSpeed = 60.0; // Скорость вращения лучв [град/с]
 
-    bool targetDetected = false;
+    // std::vector<bool> detectedTargets = false;
     bool isTargetDetected(const RadarMeasurement& measurement) const;
 
-    RadarMeasurement calcMeasurements() const;
+    RadarMeasurement calcMeasurements(const Target& target) const;
 };
