@@ -22,3 +22,8 @@ void Target::SetXYZ(double coord_x, double coord_y, double coord_z)
     y = coord_y;
     z = coord_z;
 }
+
+void Target::addTrajectoryPoint()
+{
+    trajectory.append(QPointF(x,y));
+}

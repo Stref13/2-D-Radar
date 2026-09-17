@@ -30,6 +30,7 @@ void RadarWidget::updateFrame()
     for(Target& target : targets)
     {
         target.update(deltaTime);
+        target.addTrajectoryPoint();
     }
 
     currentAngle += rotationSpeed * deltaTime;
@@ -39,11 +40,6 @@ void RadarWidget::updateFrame()
         currentAngle -= 360.0;
     }
 
-    // RadarMeasurement measurement = calcMeasurements(target);
-    // if(measurement.range > 1000)
-    // {
-    //     target.SetXYZ(400.0,600.0,120.0);
-    // }
     for(size_t i =0;i<targets.size();++i)
     {
         const Target& target = targets[i];
@@ -91,6 +87,28 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     painter.drawLine(-radius,0,radius,0);
     painter.drawLine(0,-radius,0,radius);
 
+    for(const Target& target:targets)
+    {
+        const QVector<QPointF>& trajectory = target.GetTrajectory();
+        if(trajectory.size() < 2) continue;
+        painter.setPen(QPen(Qt::green,1));
+        painter.setBrush(Qt::NoBrush);
+        for(int j = 1; j < trajectory.size(); ++j)
+        {
+            QPointF previousPoint = trajectory[j-1];
+            QPointF currentPoint = trajectory[j];
+
+            double previousScreenX = previousPoint.x() * scale;
+            double previousScreenY = -previousPoint.y() * scale;
+
+            double currentScreenX = currentPoint.x() * scale;
+            double currentScreenY = -currentPoint.y() * scale;
+
+            painter.drawLine(QPointF(previousScreenX,previousScreenY),
+                             QPointF(currentScreenX,currentScreenY));
+        }
+    }
+
     for (size_t i = 0; i < targets.size();++i)
     {
         const Target& target = targets[i];
@@ -99,12 +117,13 @@ void RadarWidget::paintEvent(QPaintEvent *event)
         double screen_targ_x = target.GetX()  * scale;
         double screen_targ_y = -target.GetY() * scale;
         bool detected = isTargetDetected(measurement);
+
         if(static_cast<int>(i) == selectedTarget)
         {
-            // painter.setBrush(Qt::white);
             painter.setPen(QPen(Qt::white,2));
             painter.drawEllipse(QPointF(screen_targ_x,screen_targ_y),7.0,7.0);
         }
+
         if(detected)
             painter.setBrush(Qt::yellow);
         else
@@ -116,12 +135,6 @@ void RadarWidget::paintEvent(QPaintEvent *event)
         painter.setPen(Qt::green);
         QString targetLabel = QString("T%1").arg(i+1);
         painter.drawText(screen_targ_x+8, screen_targ_y+5, targetLabel);
-        // QString targ_info = QString("Targ: %1\n" " R: %2\n" " Az: %3\n" " El: %4")
-        //         .arg(i+1)
-        //         .arg(measurement.range,0,'f',1)
-        //         .arg(measurement.azimuth,0,'f',1)
-        //         .arg(measurement.elevation,0,'f',1);
-        // painter.drawText(-radius+15, -radius+30+i*15, targ_info);
     }
 
     if(selectedTarget >=0 &&
