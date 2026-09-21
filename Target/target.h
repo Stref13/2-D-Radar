@@ -2,6 +2,9 @@
 #include <QVector>
 #include <QPointF>
 
+static constexpr int MAX_TRAJECTORY_POINTS = 300;
+static constexpr double TRAJECTORY_SAMPLE_PERIOD = 0.2;
+
 class Target
 {
 public:
@@ -25,6 +28,8 @@ public:
     double GetVz() const {return vz;}
 private:
     QVector<QPointF> trajectory;
+
+    double timeSinceLastPoint = 0.0;
 
     double x; // Координата x [м]
     double y; // Координата y [м]

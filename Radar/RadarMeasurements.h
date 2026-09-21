@@ -1,4 +1,5 @@
 #pragma once
+#include "../Target/target.h"
 
 struct RadarMeasurement
 {
@@ -6,3 +7,5 @@ struct RadarMeasurement
     double azimuth;   // Азимут, градусы
     double elevation; // Угол места, градусы
 };
+
+RadarMeasurement calcMeasurements(const Target& target);
