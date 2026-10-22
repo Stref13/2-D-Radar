@@ -13,39 +13,23 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
+    mainwindow.ui
+    icons.qrc
+    Radar/RadarWidget.cpp
+    Radar/RadarWidget.h
+    Radar/RadarMeasurements.cpp
+    Radar/RadarMeasurements.h
+    Target/target.cpp
+    Target/target.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(Radar_2D
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-        RadarWidget.cpp
-        RadarWidget.h
-    )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET Radar_2D APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
+    qt_add_executable(Radar_2D MANUAL_FINALIZATION ${PROJECT_SOURCES})
 else()
-    if(ANDROID)
-        add_library(Radar_2D SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(Radar_2D
-            ${PROJECT_SOURCES}
-            Radar/RadarWidget.cpp Radar/RadarWidget.h
-            icons.qrc
-            Target/target.h Target/target.cpp
-            Radar/RadarMeasurements.h Radar/RadarMeasurements.cpp
-        )
-    endif()
+    add_executable(Radar_2D ${PROJECT_SOURCES})
 endif()
 
 target_link_libraries(Radar_2D PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)

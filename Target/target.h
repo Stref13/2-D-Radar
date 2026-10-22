@@ -1,5 +1,9 @@
 #pragma once
+#include <QVector>
+#include <QPointF>
 
+static constexpr int MAX_TRAJECTORY_POINTS = 300;
+static constexpr double TRAJECTORY_SAMPLE_PERIOD = 0.2;
 
 class Target
 {
@@ -8,6 +12,8 @@ public:
 
     void update(double deltaTime);
 
+    void addTrajectoryPoint();
+    const QVector<QPointF>& GetTrajectory() const {return trajectory;}
     double GetX() const {return x;}
     double GetY() const {return y;}
     double GetZ() const {return z;}
@@ -21,6 +27,10 @@ public:
     double GetVy() const {return vy;}
     double GetVz() const {return vz;}
 private:
+    QVector<QPointF> trajectory;
+
+    double timeSinceLastPoint = 0.0;
+
     double x; // Координата x [м]
     double y; // Координата y [м]
     double z; // Координата z [м]
